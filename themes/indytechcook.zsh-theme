@@ -19,14 +19,28 @@ function prompt_char {
 ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[green]%}!"
 ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$fg[green]%}?"
 ZSH_THEME_GIT_PROMPT_CLEAN=""
+ZSH_THEME_GIT_PROMPT_IGNORE="%{$fg[red]%} i"
 
 function mygit() {
   ref=$(git symbolic-ref HEAD 2> /dev/null) || return
+  git_ignored_remotes=${git_ignored_remotes:=()}
+  for local_remote ($(git_remotes)); do
+    # from http://stackoverflow.com/questions/5203665/zsh-check-if-string-is-in-array
+    if [[ ${git_ignored_remotes[(i)${local_remote}]} -le ${#git_ignored_remotes} ]] then
+      echo "$ZSH_THEME_GIT_PROMPT_PREFIX${ref#refs/heads/}$ZSH_THEME_GIT_PROMPT_IGNORE%{$reset_color%}$ZSH_THEME_GIT_PROMPT_SUFFIX"
+      return
+    fi
+  done
   echo "$ZSH_THEME_GIT_PROMPT_PREFIX${ref#refs/heads/}$( git_prompt_status )%{$reset_color%}$ZSH_THEME_GIT_PROMPT_SUFFIX"
 }
 
+# Get a list of the remote repositories
+function git_remotes() {
+  git remote -v | cut -f 2 | cut -d " " -f 1 | cut -d @ -f 2
+}
+
 function rvminfo {
-	echo %{$reset_color%}%{$fg[red]%}$(~/.rvm/bin/rvm-prompt)%{$reset_color%}
+	echo %{$reset_color%}%{$fg[red]%}$(rvm_prompt_info)%{$reset_color%}
 }
 
 # alternate prompt with git & hg
